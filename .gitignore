@@ -1,0 +1,6 @@
+# API Keys go here — never commit this file
+*.key
+.env
+.env.local
+secrets/
+auth-profiles.json

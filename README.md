@@ -16,6 +16,8 @@ This repo contains a public reference for configuring AI models in OpenClaw. No 
 
 Copy the relevant JSON blocks from `SKILL.md` into your `~/.openclaw/openclaw.json` and add your API keys.
 
+**Note:** In `agents.defaults.models` use only the `alias` field per model. Other keys (e.g. `alias2`) are not supported and cause Config invalid.
+
 ## Model Aliases Reference
 
 | Alias | Full ID | Use Case |

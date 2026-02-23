@@ -18,6 +18,8 @@ Public reference for model aliases and configuration. No secrets, just structure
 
 ### 1. Agents → Defaults (Aliases + Fallbacks)
 
+**Config validity:** In `agents.defaults.models`, each model entry must use only the `alias` key. Do not add custom keys (e.g. `alias2`, `displayName2`) — OpenClaw rejects them and reports «Unrecognized key» / Config invalid.
+
 ```json
 {
   "agents": {

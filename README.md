@@ -24,7 +24,7 @@ Copy the relevant JSON blocks from `SKILL.md` into your `~/.openclaw/openclaw.js
 |-------|---------|----------|
 | `kimi` | `kimi-coding/k2p5` | Complex coding, architecture |
 | `sonnet` | `anthropic/claude-sonnet-4-6` | Reasoning, general tasks |
-| `mm` | `minimax/MiniMax-M2.5-highspeed` | Fast responses |
+| `mmfast` | `minimax/MiniMax-M2.5-highspeed` | Fast responses |
 | `Minimax` | `minimax/MiniMax-M2.5` | Full MiniMax |
 | `codex` | `openai-codex/gpt-5.3-codex` | Code generation |
 | `opus` | `anthropic/claude-opus-4-6` | Most capable |

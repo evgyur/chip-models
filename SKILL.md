@@ -8,6 +8,7 @@ Public reference for model aliases and configuration. No secrets, just structure
 |-------|---------------|----------|---------|
 | `kimi` | `kimi-coding/k2p5` | Kimi Coding | Complex coding, architecture |
 | `codex` | `openai-codex/gpt-5.3-codex` | OpenAI Codex | Code generation |
+| `gpti` | `openai-codex/gpt-5.3-chat-latest` | OpenAI Codex | GPT-5.3 instant/inference |
 | `sonnet` | `anthropic/claude-sonnet-4-6` | Anthropic | Reasoning, general tasks |
 | `opus` | `anthropic/claude-opus-4-6` | Anthropic | Most capable |
 | `mmfast` | `minimax/MiniMax-M2.5-highspeed` | MiniMax | Fast responses |
@@ -36,6 +37,7 @@ Use only `alias` keys in `agents.defaults.models` (no custom keys like `alias2`)
       "models": {
         "kimi-coding/k2p5": { "alias": "kimi" },
         "openai-codex/gpt-5.3-codex": { "alias": "codex" },
+        "openai-codex/gpt-5.3-chat-latest": { "alias": "gpti" },
         "anthropic/claude-sonnet-4-6": { "alias": "sonnet" },
         "anthropic/claude-opus-4-6": { "alias": "opus" },
         "minimax/MiniMax-M2.5-highspeed": { "alias": "mmfast" },
@@ -62,7 +64,7 @@ Use only `alias` keys in `agents.defaults.models` (no custom keys like `alias2`)
 
 ### OpenAI Codex (`openai-codex`)
 
-- Model ref: `openai-codex/gpt-5.3-codex`
+- Model ref: `openai-codex/gpt-5.3-codex` or `openai-codex/gpt-5.3-chat-latest`
 - Recommended auth mode in OpenClaw: OAuth (`openai-codex:default`)
 - Do **not** document this as a custom `api.openai.com/v1/chat/completions` provider in OpenClaw config; use built-in `openai-codex` auth flow.
 - Optional per-model transport override:
@@ -82,6 +84,30 @@ Use only `alias` keys in `agents.defaults.models` (no custom keys like `alias2`)
 ```
 
 (Allowed values: `auto`, `websocket`, `sse`)
+
+### GPT-5.3 Instant (`/gpti`)
+
+Alias: `gpti` → `openai-codex/gpt-5.3-chat-latest`
+
+Same provider/auth as Codex (OpenAI Codex OAuth). Use for general inference tasks when you want GPT-5.3 without code-specific tuning.
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "models": {
+        "openai-codex/gpt-5.3-chat-latest": { "alias": "gpti" }
+      }
+    }
+  }
+}
+```
+
+Usage:
+```
+Model: gpti
+Use gpti for this task
+```
 
 ---
 
@@ -124,6 +150,7 @@ Use multiple auth profiles for the **same** provider (`kimi-coding`) and order t
 |----------|-------------------|-----------|-------|
 | Kimi Coding | `kimi-coding/k2p5` | API key | Anthropic-compatible (`/coding/v1/messages`) |
 | OpenAI Codex | `openai-codex/gpt-5.3-codex` | OAuth | Built-in provider flow in OpenClaw |
+| OpenAI GPT-5.3 | `openai-codex/gpt-5.3-chat-latest` | OAuth | Same as Codex, use `/gpti` alias |
 
 ---
 

@@ -14,6 +14,7 @@ Public reference for OpenClaw model aliases and provider/auth notes. Keep secret
 | `kimi` | `kimi-coding/k2p5` | Kimi Coding | Complex coding and architecture |
 | `codex` | `openai-codex/gpt-5.3-codex` | OpenAI Codex | Code generation |
 | `gpti` | `openai-codex/gpt-5.3-chat-latest` | OpenAI Codex | GPT-5.3 Instant |
+| `gptm` | `openai-codex/gpt-5.4-mini` | OpenAI Codex | GPT-5.4 Mini |
 | `gptt` | `openai-codex/gpt-5.4` | OpenAI Codex | GPT-5.4 Thinking |
 | `sonnet` | `anthropic/claude-sonnet-4-6` | Anthropic | General reasoning |
 | `opus` | `anthropic/claude-opus-4-6` | Anthropic | Most capable |
@@ -42,6 +43,10 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
         "kimi-coding/k2p5": { "alias": "kimi" },
         "openai-codex/gpt-5.3-codex": { "alias": "codex" },
         "openai-codex/gpt-5.3-chat-latest": { "alias": "gpti" },
+        "openai-codex/gpt-5.4-mini": {
+          "alias": "gptm",
+          "params": { "transport": "auto" }
+        },
         "openai-codex/gpt-5.4": {
           "alias": "gptt",
           "params": { "transport": "auto" }
@@ -70,11 +75,11 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
 
 ### OpenAI Codex (`openai-codex`)
 
-- Model refs: `openai-codex/gpt-5.3-codex`, `openai-codex/gpt-5.3-chat-latest`, `openai-codex/gpt-5.4`
+- Model refs: `openai-codex/gpt-5.3-codex`, `openai-codex/gpt-5.3-chat-latest`, `openai-codex/gpt-5.4-mini`, `openai-codex/gpt-5.4`
 - Recommended auth mode in OpenClaw: OAuth (`openai-codex:default`)
 - This is the ChatGPT subscription flow, not pay-as-you-go API billing.
 - Do not document this as a custom `api.openai.com/v1/chat/completions` provider.
-- On current OpenClaw builds, define the provider models below if `gpti` or `gptt` show up as `configured,missing`.
+- On current OpenClaw builds, define the provider models below if `gpti`, `gptm`, or `gptt` show up as `configured,missing`.
 
 ```json
 {
@@ -91,6 +96,14 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
             "input": ["text", "image"],
             "contextWindow": 266240,
             "maxTokens": 266240
+          },
+          {
+            "id": "gpt-5.4-mini",
+            "name": "GPT-5.4 Mini",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "contextWindow": 400000,
+            "maxTokens": 400000
           },
           {
             "id": "gpt-5.4",
@@ -122,6 +135,9 @@ Optional transport override:
   "agents": {
     "defaults": {
       "models": {
+        "openai-codex/gpt-5.4-mini": {
+          "params": { "transport": "auto" }
+        },
         "openai-codex/gpt-5.4": {
           "params": { "transport": "auto" }
         }
@@ -138,6 +154,12 @@ Allowed values: `auto`, `websocket`, `sse`
 Alias: `gpti` -> `openai-codex/gpt-5.3-chat-latest`
 
 Use for general inference tasks when you want GPT-5.3 without Codex tuning.
+
+### GPT-5.4 Mini (`/gptm`)
+
+Alias: `gptm` -> `openai-codex/gpt-5.4-mini`
+
+Use for lower-latency, lower-cost OpenAI Codex workloads when you still want strong tool use and reasoning.
 
 ### GPT-5.4 Thinking (`/gptt`)
 
@@ -183,6 +205,7 @@ Use multiple auth profiles for the same provider (`kimi-coding`) and order them 
 | Kimi Coding | `kimi-coding/k2p5` | API key | Anthropic-compatible (`/coding/v1/messages`) |
 | OpenAI Codex | `openai-codex/gpt-5.3-codex` | OAuth | ChatGPT subscription flow |
 | OpenAI GPT-5.3 | `openai-codex/gpt-5.3-chat-latest` | OAuth | `/gpti` alias |
+| OpenAI GPT-5.4 Mini | `openai-codex/gpt-5.4-mini` | OAuth | `/gptm` alias |
 | OpenAI GPT-5.4 | `openai-codex/gpt-5.4` | OAuth | `/gptt` alias |
 
 ## Usage
@@ -200,6 +223,7 @@ In chat:
 Use kimi for this task
 Model: codex
 Model: gpti
+Model: gptm
 Model: gptt
 ```
 

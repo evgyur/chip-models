@@ -17,11 +17,12 @@ This repository documents a public OpenClaw setup. It intentionally excludes API
 | `Minimax` | `minimax/MiniMax-M2.5` | Full MiniMax |
 | `codex` | `openai-codex/gpt-5.3-codex` | Codex coding model |
 | `gpti` | `openai-codex/gpt-5.3-chat-latest` | GPT-5.3 Instant |
+| `gptm` | `openai-codex/gpt-5.4-mini` | GPT-5.4 Mini |
 | `gptt` | `openai-codex/gpt-5.4` | GPT-5.4 Thinking |
 
 ## OpenAI Note
 
-`codex`, `gpti`, and `gptt` are documented here for the OAuth-backed `openai-codex` flow in OpenClaw, using ChatGPT subscription access rather than pay-as-you-go API billing.
+`codex`, `gpti`, `gptm`, and `gptt` are documented here for the OAuth-backed `openai-codex` flow in OpenClaw, using ChatGPT subscription access rather than pay-as-you-go API billing.
 
 ## Files
 

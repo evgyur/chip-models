@@ -68,10 +68,217 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
 - Model ref: `kimi-coding/k2p5`
 - In OpenClaw this provider is Anthropic-compatible.
 - If you define the provider block manually, use:
-  - `baseUrl: "https://api.kimi.com/coding/"`
+  - `baseUrl: "https://api.kimi.com/coding/v1"`
   - `api: "anthropic-messages"`
 - Wire endpoint: `POST https://api.kimi.com/coding/v1/messages`
 - Auth: API key via local-only config or auth profile
+
+Working public shape:
+
+```json
+{
+  "models": {
+    "providers": {
+      "kimi-coding": {
+        "baseUrl": "https://api.kimi.com/coding/v1",
+        "api": "anthropic-messages",
+        "apiKey": "<KIMI_API_KEY>",
+        "models": [
+          {
+            "id": "k2p5",
+            "name": "Kimi Coding",
+            "reasoning": false,
+            "input": ["text"],
+            "contextWindow": 200000,
+            "maxTokens": 128000
+          }
+        ]
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "kimi-coding:default": {
+        "provider": "kimi-coding",
+        "mode": "api_key"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "kimi-coding/k2p5"
+      },
+      "models": {
+        "kimi-coding/k2p5": {
+          "alias": "kimi"
+        }
+      }
+    }
+  }
+}
+```
+
+#### Kimi Anti-Pattern
+
+Do not document or ship Kimi Coding in OpenClaw like this:
+
+```json
+{
+  "models": {
+    "providers": {
+      "kimi-coding": {
+        "baseUrl": "https://api.kimi.com/coding/v1",
+        "api": "openai-completions",
+        "apiKey": "<KIMI_API_KEY>",
+        "models": [
+          {
+            "id": "kimi-for-coding",
+            "name": "Kimi For Coding"
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "models": {
+        "kimi-coding/kimi-for-coding": {
+          "alias": "kimi"
+        }
+      }
+    }
+  }
+}
+```
+
+Why this matters:
+
+- it targets `POST /chat/completions` instead of `POST /messages`
+- it uses the old-looking model id `kimi-for-coding` instead of OpenClaw's working ref `k2p5`
+- on live OpenClaw deployments this often ends in fallback rather than an obviously broken config
+
+Typical symptoms from the broken shape:
+
+- `HTTP 404` / `model_not_found`
+- `selected model unavailable`
+- `Model "kimi/k2p5" not found`
+- `Kimi For Coding is currently only available for Coding Agents ...`
+
+#### Kimi Migration
+
+If your current OpenClaw config still contains any of these values:
+
+- `api: "openai-completions"` under `models.providers.kimi-coding`
+- model id `kimi-for-coding`
+- alias entry `kimi-coding/kimi-for-coding`
+- fallback notices claiming `selected model unavailable`
+
+change them to:
+
+- `api: "anthropic-messages"`
+- model id `k2p5`
+- alias entry `kimi-coding/k2p5`
+- auth profile provider `kimi-coding`
+
+Minimal migration target:
+
+```json
+{
+  "models": {
+    "providers": {
+      "kimi-coding": {
+        "baseUrl": "https://api.kimi.com/coding/v1",
+        "api": "anthropic-messages",
+        "apiKey": "<KIMI_API_KEY>",
+        "models": [
+          {
+            "id": "k2p5",
+            "name": "Kimi Coding",
+            "reasoning": false,
+            "input": ["text"],
+            "contextWindow": 200000,
+            "maxTokens": 128000
+          }
+        ]
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "kimi-coding:default": {
+        "provider": "kimi-coding",
+        "mode": "api_key"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "models": {
+        "kimi-coding/k2p5": {
+          "alias": "kimi"
+        }
+      }
+    }
+  }
+}
+```
+
+If older sessions or copied configs also define a second provider named `kimi`, keep it consistent with the same working shape or remove it entirely. Mixed `kimi` / `kimi-coding` definitions with different APIs are a common source of confusing fallback behavior.
+
+#### Kimi Troubleshooting
+
+If Kimi works in one OpenClaw environment but not another, compare these exact fields first:
+
+- `models.providers.kimi-coding.api`
+- `models.providers.kimi-coding.baseUrl`
+- `models.providers.kimi-coding.models[0].id`
+- `agents.defaults.models`
+- `auth.profiles.kimi-coding:*`
+
+Interpretation guide:
+
+- `403` with a message about "only available for Coding Agents" after `/chat/completions` usually means you are using the wrong protocol shape for OpenClaw, not necessarily a dead key
+- `404` / `model_not_found` usually means the OpenClaw-visible model ref does not match the provider definition that is actually loaded
+- `selected model unavailable` plus a successful fallback usually means Kimi was skipped and another provider answered the chat
+
+Direct probe for the working public shape:
+
+```bash
+curl -sS https://api.kimi.com/coding/v1/messages \
+  -H "x-api-key: $KIMI_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  -d '{
+    "model": "k2p5",
+    "max_tokens": 16,
+    "messages": [
+      { "role": "user", "content": "Reply with OK" }
+    ]
+  }'
+```
+
+Expected healthy result:
+
+- HTTP `200`
+- assistant text reply such as `OK`
+
+Cross-check for a likely broken config shape:
+
+```bash
+curl -sS https://api.kimi.com/coding/v1/chat/completions \
+  -H "Authorization: Bearer $KIMI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kimi-for-coding",
+    "max_tokens": 16,
+    "messages": [
+      { "role": "user", "content": "Reply with OK" }
+    ]
+  }'
+```
+
+If this second probe returns `403` or provider-specific access errors while the `/messages` probe succeeds, prefer the Anthropic-compatible `kimi-coding/k2p5` configuration in OpenClaw.
 
 ### OpenAI Codex (`openai-codex`)
 

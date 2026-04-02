@@ -7,6 +7,23 @@ description: Use when documenting or configuring public OpenClaw model aliases a
 
 Public reference for OpenClaw model aliases and provider/auth notes. Keep secrets out of git; use placeholders or local-only auth files.
 
+## Contract
+
+**Primary class:** Verifier
+**Secondary class:** Governor
+
+**Use when:** documenting, auditing, or preparing safe model alias/provider/auth guidance for OpenClaw without exposing secrets.
+
+**Do not use when:** the user asks to make a live config change and the exact config subtree has not been verified yet.
+
+**Output contract:**
+- alias or provider mapping used
+- whether the statement is documentation-only or live-config applicable
+- relevant provider/auth caveat
+- explicit note when a config/schema check is still required before editing
+
+**Verification gate:** do not present a model/provider detail as live-config truth unless it is verified against the actual runtime/config path.
+
 ## Quick Reference
 
 | Alias | Full Model ID | Provider | Purpose |
@@ -18,8 +35,9 @@ Public reference for OpenClaw model aliases and provider/auth notes. Keep secret
 | `gptt` | `openai-codex/gpt-5.4` | OpenAI Codex | GPT-5.4 Thinking |
 | `sonnet` | `anthropic/claude-sonnet-4-6` | Anthropic | General reasoning |
 | `opus` | `anthropic/claude-opus-4-6` | Anthropic | Most capable |
-| `mmfast` | `minimax/MiniMax-M2.5-highspeed` | MiniMax | Fast responses |
-| `Minimax` | `minimax/MiniMax-M2.5` | MiniMax | Full MiniMax M2.5 |
+| `mmfast` | `minimax/MiniMax-M2.7-highspeed` | MiniMax | Fast responses |
+| `Minimax` | `minimax/MiniMax-M2.7` | MiniMax | Full MiniMax M2.7 |
+| `trinity` | `openrouter/arcee-ai/trinity-large-thinking` | OpenRouter | Optional Trinity shortcut |
 
 ## Recommended Config
 
@@ -53,8 +71,9 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
         },
         "anthropic/claude-sonnet-4-6": { "alias": "sonnet" },
         "anthropic/claude-opus-4-6": { "alias": "opus" },
-        "minimax/MiniMax-M2.5-highspeed": { "alias": "mmfast" },
-        "minimax/MiniMax-M2.5": { "alias": "Minimax" }
+        "minimax/MiniMax-M2.7-highspeed": { "alias": "mmfast" },
+        "minimax/MiniMax-M2.7": { "alias": "Minimax" },
+        "openrouter/arcee-ai/trinity-large-thinking": { "alias": "trinity" }
       }
     }
   }
@@ -68,217 +87,10 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
 - Model ref: `kimi-coding/k2p5`
 - In OpenClaw this provider is Anthropic-compatible.
 - If you define the provider block manually, use:
-  - `baseUrl: "https://api.kimi.com/coding/v1"`
+  - `baseUrl: "https://api.kimi.com/coding/"`
   - `api: "anthropic-messages"`
 - Wire endpoint: `POST https://api.kimi.com/coding/v1/messages`
 - Auth: API key via local-only config or auth profile
-
-Working public shape:
-
-```json
-{
-  "models": {
-    "providers": {
-      "kimi-coding": {
-        "baseUrl": "https://api.kimi.com/coding/v1",
-        "api": "anthropic-messages",
-        "apiKey": "<KIMI_API_KEY>",
-        "models": [
-          {
-            "id": "k2p5",
-            "name": "Kimi Coding",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 128000
-          }
-        ]
-      }
-    }
-  },
-  "auth": {
-    "profiles": {
-      "kimi-coding:default": {
-        "provider": "kimi-coding",
-        "mode": "api_key"
-      }
-    }
-  },
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "kimi-coding/k2p5"
-      },
-      "models": {
-        "kimi-coding/k2p5": {
-          "alias": "kimi"
-        }
-      }
-    }
-  }
-}
-```
-
-#### Kimi Anti-Pattern
-
-Do not document or ship Kimi Coding in OpenClaw like this:
-
-```json
-{
-  "models": {
-    "providers": {
-      "kimi-coding": {
-        "baseUrl": "https://api.kimi.com/coding/v1",
-        "api": "openai-completions",
-        "apiKey": "<KIMI_API_KEY>",
-        "models": [
-          {
-            "id": "kimi-for-coding",
-            "name": "Kimi For Coding"
-          }
-        ]
-      }
-    }
-  },
-  "agents": {
-    "defaults": {
-      "models": {
-        "kimi-coding/kimi-for-coding": {
-          "alias": "kimi"
-        }
-      }
-    }
-  }
-}
-```
-
-Why this matters:
-
-- it targets `POST /chat/completions` instead of `POST /messages`
-- it uses the old-looking model id `kimi-for-coding` instead of OpenClaw's working ref `k2p5`
-- on live OpenClaw deployments this often ends in fallback rather than an obviously broken config
-
-Typical symptoms from the broken shape:
-
-- `HTTP 404` / `model_not_found`
-- `selected model unavailable`
-- `Model "kimi/k2p5" not found`
-- `Kimi For Coding is currently only available for Coding Agents ...`
-
-#### Kimi Migration
-
-If your current OpenClaw config still contains any of these values:
-
-- `api: "openai-completions"` under `models.providers.kimi-coding`
-- model id `kimi-for-coding`
-- alias entry `kimi-coding/kimi-for-coding`
-- fallback notices claiming `selected model unavailable`
-
-change them to:
-
-- `api: "anthropic-messages"`
-- model id `k2p5`
-- alias entry `kimi-coding/k2p5`
-- auth profile provider `kimi-coding`
-
-Minimal migration target:
-
-```json
-{
-  "models": {
-    "providers": {
-      "kimi-coding": {
-        "baseUrl": "https://api.kimi.com/coding/v1",
-        "api": "anthropic-messages",
-        "apiKey": "<KIMI_API_KEY>",
-        "models": [
-          {
-            "id": "k2p5",
-            "name": "Kimi Coding",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 128000
-          }
-        ]
-      }
-    }
-  },
-  "auth": {
-    "profiles": {
-      "kimi-coding:default": {
-        "provider": "kimi-coding",
-        "mode": "api_key"
-      }
-    }
-  },
-  "agents": {
-    "defaults": {
-      "models": {
-        "kimi-coding/k2p5": {
-          "alias": "kimi"
-        }
-      }
-    }
-  }
-}
-```
-
-If older sessions or copied configs also define a second provider named `kimi`, keep it consistent with the same working shape or remove it entirely. Mixed `kimi` / `kimi-coding` definitions with different APIs are a common source of confusing fallback behavior.
-
-#### Kimi Troubleshooting
-
-If Kimi works in one OpenClaw environment but not another, compare these exact fields first:
-
-- `models.providers.kimi-coding.api`
-- `models.providers.kimi-coding.baseUrl`
-- `models.providers.kimi-coding.models[0].id`
-- `agents.defaults.models`
-- `auth.profiles.kimi-coding:*`
-
-Interpretation guide:
-
-- `403` with a message about "only available for Coding Agents" after `/chat/completions` usually means you are using the wrong protocol shape for OpenClaw, not necessarily a dead key
-- `404` / `model_not_found` usually means the OpenClaw-visible model ref does not match the provider definition that is actually loaded
-- `selected model unavailable` plus a successful fallback usually means Kimi was skipped and another provider answered the chat
-
-Direct probe for the working public shape:
-
-```bash
-curl -sS https://api.kimi.com/coding/v1/messages \
-  -H "x-api-key: $KIMI_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "content-type: application/json" \
-  -d '{
-    "model": "k2p5",
-    "max_tokens": 16,
-    "messages": [
-      { "role": "user", "content": "Reply with OK" }
-    ]
-  }'
-```
-
-Expected healthy result:
-
-- HTTP `200`
-- assistant text reply such as `OK`
-
-Cross-check for a likely broken config shape:
-
-```bash
-curl -sS https://api.kimi.com/coding/v1/chat/completions \
-  -H "Authorization: Bearer $KIMI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "kimi-for-coding",
-    "max_tokens": 16,
-    "messages": [
-      { "role": "user", "content": "Reply with OK" }
-    ]
-  }'
-```
-
-If this second probe returns `403` or provider-specific access errors while the `/messages` probe succeeds, prefer the Anthropic-compatible `kimi-coding/k2p5` configuration in OpenClaw.
 
 ### OpenAI Codex (`openai-codex`)
 
@@ -356,6 +168,30 @@ Optional transport override:
 
 Allowed values: `auto`, `websocket`, `sse`
 
+### OpenRouter Trinity (`/trinity`)
+
+Alias: `trinity` -> `openrouter/arcee-ai/trinity-large-thinking`
+
+Use for optional Trinity access without changing the default model.
+
+Documented setup example:
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "models": {
+        "openrouter/arcee-ai/trinity-large-thinking": {
+          "alias": "trinity"
+        }
+      }
+    }
+  }
+}
+```
+
+Auth: provide `OPENROUTER_API_KEY` via local-only gateway env/config, not in git.
+
 ### GPT-5.3 Instant (`/gpti`)
 
 Alias: `gpti` -> `openai-codex/gpt-5.3-chat-latest`
@@ -414,6 +250,7 @@ Use multiple auth profiles for the same provider (`kimi-coding`) and order them 
 | OpenAI GPT-5.3 | `openai-codex/gpt-5.3-chat-latest` | OAuth | `/gpti` alias |
 | OpenAI GPT-5.4 Mini | `openai-codex/gpt-5.4-mini` | OAuth | `/gptm` alias |
 | OpenAI GPT-5.4 | `openai-codex/gpt-5.4` | OAuth | `/gptt` alias |
+| OpenRouter Trinity | `openrouter/arcee-ai/trinity-large-thinking` | API key | `/trinity` alias |
 
 ## Usage
 
@@ -432,7 +269,17 @@ Model: codex
 Model: gpti
 Model: gptm
 Model: gptt
+Model: trinity
 ```
+
+## Claim wording rule
+
+Separate:
+- **documented reference** — what this skill documents as the intended alias/provider setup
+- **runtime verified** — what has been checked in the actual current config/runtime
+- **requires config/schema check** — likely valid, but not yet safe to present as current truth
+
+Avoid collapsing documentation examples into claims about the current live config.
 
 ## Safety Checklist
 

@@ -28,11 +28,11 @@ Public reference for OpenClaw model aliases and provider/auth notes. Keep secret
 
 | Alias | Full Model ID | Provider | Purpose |
 |-------|---------------|----------|---------|
-| `kimi` | `kimi-coding/k2p5` | Kimi Coding | Complex coding and architecture |
+| `kimi` | `kimi-coding/kimi-code` | Kimi Coding | Main Kimi coding/thinking model |
 | `codex` | `openai-codex/gpt-5.3-codex` | OpenAI Codex | Code generation |
 | `gpti` | `openai-codex/gpt-5.3-chat-latest` | OpenAI Codex | GPT-5.3 Instant |
 | `gptm` | `openai-codex/gpt-5.4-mini` | OpenAI Codex | GPT-5.4 Mini |
-| `gptt` | `openai-codex/gpt-5.4` | OpenAI Codex | GPT-5.4 Thinking |
+| `gptt` | `openai-codex/gpt-5.5` | OpenAI Codex | GPT-5.5 Thinking |
 | `sonnet` | `anthropic/claude-sonnet-4-6` | Anthropic | General reasoning |
 | `opus` | `anthropic/claude-opus-4-6` | Anthropic | Most capable |
 | `mmfast` | `minimax/MiniMax-M2.7-highspeed` | MiniMax | Fast responses |
@@ -48,8 +48,9 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
   "agents": {
     "defaults": {
       "model": {
-        "primary": "kimi-coding/k2p5",
+        "primary": "kimi-coding/kimi-code",
         "fallbacks": [
+          "openai-codex/gpt-5.5",
           "anthropic/claude-sonnet-4-6",
           "anthropic/claude-opus-4-6",
           "minimax/MiniMax-M2.5-highspeed",
@@ -58,14 +59,14 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
         ]
       },
       "models": {
-        "kimi-coding/k2p5": { "alias": "kimi" },
+        "kimi-coding/kimi-code": { "alias": "kimi" },
         "openai-codex/gpt-5.3-codex": { "alias": "codex" },
         "openai-codex/gpt-5.3-chat-latest": { "alias": "gpti" },
         "openai-codex/gpt-5.4-mini": {
           "alias": "gptm",
           "params": { "transport": "auto" }
         },
-        "openai-codex/gpt-5.4": {
+        "openai-codex/gpt-5.5": {
           "alias": "gptt",
           "params": { "transport": "auto" }
         },
@@ -84,17 +85,23 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
 
 ### Kimi Coding (`kimi-coding`)
 
-- Model ref: `kimi-coding/k2p5`
+- Model ref: `kimi-coding/kimi-code`
 - In OpenClaw this provider is Anthropic-compatible.
 - If you define the provider block manually, use:
-  - `baseUrl: "https://api.kimi.com/coding/"`
+  - `baseUrl: "https://api.kimi.com/coding/v1"`
   - `api: "anthropic-messages"`
 - Wire endpoint: `POST https://api.kimi.com/coding/v1/messages`
 - Auth: API key via local-only config or auth profile
 
+Important distinction:
+
+- `kimi-coding/...` = Kimi Coding
+- `moonshot/...` = Moonshot API
+- `kimi/...` is not the canonical way to reference current OpenClaw Kimi models
+
 ### OpenAI Codex (`openai-codex`)
 
-- Model refs: `openai-codex/gpt-5.3-codex`, `openai-codex/gpt-5.3-chat-latest`, `openai-codex/gpt-5.4-mini`, `openai-codex/gpt-5.4`
+- Model refs: `openai-codex/gpt-5.3-codex`, `openai-codex/gpt-5.3-chat-latest`, `openai-codex/gpt-5.4-mini`, `openai-codex/gpt-5.5`
 - Recommended auth mode in OpenClaw: OAuth (`openai-codex:default`)
 - This is the ChatGPT subscription flow, not pay-as-you-go API billing.
 - Do not document this as a custom `api.openai.com/v1/chat/completions` provider.
@@ -125,12 +132,12 @@ Use only `alias` keys in `agents.defaults.models` unless a model explicitly need
             "maxTokens": 400000
           },
           {
-            "id": "gpt-5.4",
-            "name": "GPT-5.4 Thinking",
+            "id": "gpt-5.5",
+            "name": "GPT-5.5 Thinking",
             "reasoning": true,
             "input": ["text", "image"],
-            "contextWindow": 266240,
-            "maxTokens": 266240
+            "contextWindow": 400000,
+            "maxTokens": 400000
           }
         ]
       }
@@ -157,7 +164,7 @@ Optional transport override:
         "openai-codex/gpt-5.4-mini": {
           "params": { "transport": "auto" }
         },
-        "openai-codex/gpt-5.4": {
+        "openai-codex/gpt-5.5": {
           "params": { "transport": "auto" }
         }
       }
@@ -204,9 +211,9 @@ Alias: `gptm` -> `openai-codex/gpt-5.4-mini`
 
 Use for lower-latency, lower-cost OpenAI Codex workloads when you still want strong tool use and reasoning.
 
-### GPT-5.4 Thinking (`/gptt`)
+### GPT-5.5 Thinking (`/gptt`)
 
-Alias: `gptt` -> `openai-codex/gpt-5.4`
+Alias: `gptt` -> `openai-codex/gpt-5.5`
 
 Use when you want longer reasoning in the same OAuth-backed OpenAI Codex flow.
 
@@ -233,7 +240,7 @@ Use multiple auth profiles for the same provider (`kimi-coding`) and order them 
   "agents": {
     "defaults": {
       "model": {
-        "primary": "kimi-coding/k2p5",
+        "primary": "kimi-coding/kimi-code",
         "fallbacks": ["minimax/MiniMax-M2.5"]
       }
     }
@@ -245,12 +252,13 @@ Use multiple auth profiles for the same provider (`kimi-coding`) and order them 
 
 | Provider | Model ref example | Auth mode | Notes |
 |----------|-------------------|-----------|-------|
-| Kimi Coding | `kimi-coding/k2p5` | API key | Anthropic-compatible (`/coding/v1/messages`) |
+| Kimi Coding | `kimi-coding/kimi-code` | API key | Anthropic-compatible (`/coding/v1/messages`) |
 | OpenAI Codex | `openai-codex/gpt-5.3-codex` | OAuth | ChatGPT subscription flow |
 | OpenAI GPT-5.3 | `openai-codex/gpt-5.3-chat-latest` | OAuth | `/gpti` alias |
 | OpenAI GPT-5.4 Mini | `openai-codex/gpt-5.4-mini` | OAuth | `/gptm` alias |
-| OpenAI GPT-5.4 | `openai-codex/gpt-5.4` | OAuth | `/gptt` alias |
+| OpenAI GPT-5.5 | `openai-codex/gpt-5.5` | OAuth | `/gptt` alias |
 | OpenRouter Trinity | `openrouter/arcee-ai/trinity-large-thinking` | API key | `/trinity` alias |
+| Moonshot | `moonshot/kimi-k2.5` | API key | Separate provider line from `kimi-coding` |
 
 ## Usage
 
